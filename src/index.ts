@@ -24,6 +24,7 @@ import { ItemModel, UserModel } from "./utils/schemaModels";
 
 
 
+
 //// ItemFunctions
 // CreateItem
 app.post("/item/create", async (req: Request, res: Response) => {
@@ -122,6 +123,17 @@ app.post("/user/login", async (req: Request, res: Response) => {
 		}
 	} catch (err) {
 		return res.status(500).json({ message: "ログイン失敗" });
+	}
+});
+
+
+
+// CheckLogin
+app.get("/user/islogin", async (req: Request, res: Response) => {
+	if (req.session.email) {
+		return res.status(200).json({ result: true, email: req.session.email });
+	} else {
+		return res.status(200).json({ result: false });
 	}
 });
 
