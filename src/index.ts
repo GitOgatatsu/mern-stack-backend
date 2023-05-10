@@ -9,6 +9,7 @@ import { ItemModel } from "./utils/schemaModels";
 
 
 
+// CreateItem
 app.post("/item/create", async (req: express.Request, res: express.Response) => {
 	try {
 		await connectDB();
@@ -22,6 +23,7 @@ app.post("/item/create", async (req: express.Request, res: express.Response) => 
 
 
 
+// ReadAllItems
 app.get("/", async (req: express.Request, res: express.Response) => {
 	try {
 		await connectDB();
@@ -32,6 +34,18 @@ app.get("/", async (req: express.Request, res: express.Response) => {
 	}
 });
 
+
+
+// ReadItem
+app.get("/item/read/:id", async (req: express.Request, res: express.Response) => {
+	try {
+		await connectDB();
+		const singleItem = await ItemModel.findById(req.params.id);
+		return res.status(200).json({ message: "アイテム取得成功 (Single)", singleItem: singleItem });
+	} catch (err) {
+		return res.status(500).json({ message: "アイテム取得失敗 (Single)" });
+	}
+});
 
 
 app.listen(5000, () => {
