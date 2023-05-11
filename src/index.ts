@@ -17,6 +17,8 @@ declare module "express-session" {
 		email: string;
 	}
 };
+import cors from "cors";
+app.use(cors());
 
 import { connectDB } from "./utils/database";
 import { ItemModel, UserModel } from "./utils/schemaModels";
