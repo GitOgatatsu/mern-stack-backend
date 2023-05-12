@@ -19,9 +19,13 @@ declare module "express-session" {
 };
 import cors from "cors";
 app.use(cors());
+import jwt from "jsonwebtoken";
 
 import { connectDB } from "./utils/database";
 import { ItemModel, UserModel } from "./utils/schemaModels";
+import auth from "./utils/auth";
+
+const secret_key = "mern-market";
 
 
 
@@ -29,7 +33,7 @@ import { ItemModel, UserModel } from "./utils/schemaModels";
 
 //// ItemFunctions
 // CreateItem
-app.post("/item/create", async (req: Request, res: Response) => {
+app.post("/item/create", auth, async (req: Request, res: Response) => {
 	try {
 		await connectDB();
 //		console.log(req.body.title);
@@ -70,11 +74,16 @@ app.get("/item/read/:id", async (req: Request, res: Response) => {
 
 
 // UpdateItem
-app.put("/item/update/:id", async (req: Request, res: Response) => {
+app.put("/item/update/:id", auth, async (req: Request, res: Response) => {
 	try {
 		await connectDB();
-		await ItemModel.updateOne({ _id: req.params.id }, req.body );
-		return res.status(200).json({ message: "アイテム更新成功" });
+		const singleItem = await ItemModel.findById(req.params.id);
+		if (singleItem && singleItem.email === req.body.email) {
+			await ItemModel.updateOne({ _id: req.params.id }, req.body);
+			return res.status(200).json({ message: "アイテム更新成功" });
+		} else {
+			throw new Error();
+		}
 	} catch (err) {
 		return res.status(500).json({ message: "アイテム更新失敗" });
 	}
@@ -83,11 +92,16 @@ app.put("/item/update/:id", async (req: Request, res: Response) => {
 
 
 // DeleteItem
-app.delete("/item/delete/:id", async (req: Request, res: Response) => {
+app.delete("/item/delete/:id", auth, async (req: Request, res: Response) => {
 	try {
 		await connectDB();
-		await ItemModel.deleteOne({ _id: req.params.id });
-		return res.status(200).json({ message: "アイテム削除成功" });
+		const singleItem = await ItemModel.findById(req.params.id);
+		if (singleItem && singleItem.email === req.body.email) {
+			await ItemModel.deleteOne({ _id: req.params.id });
+			return res.status(200).json({ message: "アイテム削除成功" });
+		} else {
+			throw new Error();
+		}
 	} catch (err) {
 		return res.status(500).json({ message: "アイテム削除失敗" });
 	}
@@ -115,13 +129,18 @@ app.post("/user/login", async (req: Request, res: Response) => {
 		const savedUserData = await UserModel.findOne({ email: req.body.email });
 		if (savedUserData) {
 			if (savedUserData.password === req.body.password) {
-				req.session.email = req.body.email;
-				return res.status(200).json({ message: "ログイン成功" });
+//				req.session.email = req.body.email;
+				const payload = {
+					email: req.body.email
+				};
+				const token = jwt.sign(payload, secret_key, { expiresIn: "23h" });
+				console.log(token);
+				return res.status(200).json({ message: "ログイン成功", token: token });
 			} else {
-				return res.status(400).json({ message: "ログイン失敗: パスワードが違います" });
+				return res.status(401).json({ message: "ログイン失敗: パスワードが違います" });
 			}
 		} else {
-			return res.status(400).json({ message: "ログイン失敗: ユーザが存在しません" });
+			return res.status(401).json({ message: "ログイン失敗: ユーザが存在しません" });
 		}
 	} catch (err) {
 		return res.status(500).json({ message: "ログイン失敗" });
@@ -130,14 +149,14 @@ app.post("/user/login", async (req: Request, res: Response) => {
 
 
 
-// CheckLogin
-app.get("/user/islogin", async (req: Request, res: Response) => {
-	if (req.session.email) {
-		return res.status(200).json({ result: true, email: req.session.email });
-	} else {
-		return res.status(200).json({ result: false });
-	}
-});
+//// CheckLogin
+//app.get("/user/islogin", async (req: Request, res: Response) => {
+//	if (req.session.email) {
+//		return res.status(200).json({ result: true, email: req.session.email });
+//	} else {
+//		return res.status(200).json({ result: false });
+//	}
+//});
 
 
 
